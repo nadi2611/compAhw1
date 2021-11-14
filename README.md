@@ -1,8 +1,6 @@
 # compAhw1
 
-##########################################
-#############  TESTS FAILED  #############
-##########################################
+ TESTS FAILED
 
 tests/example4.trc
 tests/example11.trc
