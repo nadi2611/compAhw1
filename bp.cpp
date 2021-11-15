@@ -97,6 +97,7 @@ public:
             history_entry_array[key] += 1;
         }
         history_entry_array[key] = history_entry_array[key] & effective_history_bits;
+        uint8_t hist = history_entry_array[key]; // TODO: REMOVE
     }
 
     void resetHistory(const uint8_t btb_index) {
@@ -239,9 +240,9 @@ class PredictionMatrix {
 public:
     PredictionMatrix(unsigned btb_size, unsigned history_size, bool isTableGlobal, STATE initial_state) :
                     is_table_global(isTableGlobal) {
-        this->matrix_size = pow(2,btb_size);
-        this->prediction_table = new PredictionTablePerBranch[matrix_size];
-        for(int i = 0; i < matrix_size; i++){
+        this->matrix_size = btb_size;
+        this->prediction_table = new PredictionTablePerBranch[btb_size];
+        for(int i = 0; i < btb_size; i++){
             this->prediction_table[i]._create_entries_array(history_size, initial_state);
         }
     };
@@ -400,6 +401,7 @@ class BTBTable {
     }
 
     uint32_t _get_bits_by_indices(const uint32_t address, const unsigned start, const unsigned end) {
+        if(start == end) return 0;
         uint32_t decoded_bits = address;
         decoded_bits <<= (OPCODE_BITS_LEN - end);
         decoded_bits >>=  (start + OPCODE_BITS_LEN - end);
@@ -465,6 +467,7 @@ public:
             // The currently handled branch already has an entry allocated for it and has the right tag.
             // No need to reset, just get index to the fsm and return the prediction and target.
             *target = btb_entries_array[indices->btb_index].target;
+            uint8_t hist = history_table.getHistory(indices->btb_index); // TODO: REMOVE
             uint8_t history_key = (share_mode != NOT_SHARED) ? indices->shared_index : history_table.getHistory(indices->btb_index);
             prediction = prediction_matrix.predict(indices->btb_index,history_key);
 
@@ -496,11 +499,14 @@ public:
             if(!COMPARE(btb_entries_array[indices->btb_index].tag_identifier, indices->tag_index)) {
                 //_reset_btb_entry_upon_tag_collision(*indices, targetPc);
 
+                uint8_t history_key = (share_mode != NOT_SHARED) ? indices->shared_index : history_table.getHistory(indices->btb_index);
+
                 if(!is_fsm_global) prediction_matrix.resetFsm(indices->btb_index, fsm_initial_state);
                 if(!is_history_global) history_table.resetHistory(indices->btb_index);
+
                 _update_entrance_info(*indices, targetPc);
 
-                uint8_t history_key = (share_mode != NOT_SHARED) ? indices->shared_index : history_table.getHistory(indices->btb_index);
+                //uint8_t history_key = (share_mode != NOT_SHARED) ? indices->shared_index : history_table.getHistory(indices->btb_index);
                 prediction_matrix.updateFsm(indices->btb_index, history_key, taken);
                 history_table.updateHistory(indices->btb_index, taken);
 
