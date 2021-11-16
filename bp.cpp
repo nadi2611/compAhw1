@@ -98,11 +98,17 @@ public:
         }
         history_entry_array[key] = history_entry_array[key] & effective_history_bits;
         uint8_t hist = history_entry_array[key]; // TODO: REMOVE
+        //printHistory(key);
     }
 
     void resetHistory(const uint8_t btb_index) {
         uint32_t key = is_history_global ? 0 : btb_index;
         history_entry_array[key] = 0;
+    }
+
+    // TODO: REMOVE. FOR DEBUG
+    uint8_t printHistory(const uint8_t btb_index) {
+        cout << history_entry_array[btb_index] << endl;
     }
 };
 
@@ -154,6 +160,11 @@ public:
         int state = static_cast<int>(current_state);
         state = taken ? (state + 1) : (state - 1);
         current_state = static_cast<STATE>(state);
+    }
+
+    // TODO: REMOVE. FOR DEBUG
+    STATE getState() {
+        return current_state;
     }
 };
 
@@ -222,6 +233,13 @@ public:
         }
     }
 
+    // TODO: REMOVE.FOR DEBUG
+    void printArray() {
+        for(int i=0; i< table_size; i++) {
+            cout << "history key is: " << i << " state is: " << prediction_entries[i].getState() << endl;
+        }
+    }
+
 };
 
 /*** #############################      PREDICTION MATRIX       ############################# ***/
@@ -264,10 +282,13 @@ public:
     void updateFsm(uint8_t btb_index, uint8_t history_key, bool taken) {
         if(is_table_global) {
             prediction_table[0].updateFsm(history_key, taken);
+            //prediction_table[0].printArray();// TODO: REMOVE. FOR DEBUG
         }
         else {
             prediction_table[btb_index].updateFsm(history_key, taken);
+            //prediction_table[btb_index].printArray(); // TODO: REMOVE. FOR DEBUG
         }
+
     }
 
     void resetFsm(uint8_t btb_index, STATE initial_state) {
@@ -467,7 +488,7 @@ public:
             // The currently handled branch already has an entry allocated for it and has the right tag.
             // No need to reset, just get index to the fsm and return the prediction and target.
             *target = btb_entries_array[indices->btb_index].target;
-            uint8_t hist = history_table.getHistory(indices->btb_index); // TODO: REMOVE
+            uint8_t hist = history_table.getHistory(indices->btb_index); // TODO: REMOVE. For Debug
             uint8_t history_key = (share_mode != NOT_SHARED) ? indices->shared_index : history_table.getHistory(indices->btb_index);
             prediction = prediction_matrix.predict(indices->btb_index,history_key);
 
@@ -487,6 +508,9 @@ public:
         auto *indices = new Indices();
         _decode_indices(pc, *indices);
 
+        // TODO: REMOVE. FOR DEBUG
+        //cout << "shared fsm key is: " << (unsigned)indices->shared_index << endl;
+
         // Update statistics
         if((!taken && (pred_dst != pc+4)) || (taken && (pred_dst == pc+4)) || (taken && (pred_dst != targetPc))) {
             statistics.flush_num++;
@@ -502,7 +526,14 @@ public:
                 uint8_t history_key = (share_mode != NOT_SHARED) ? indices->shared_index : history_table.getHistory(indices->btb_index);
 
                 if(!is_fsm_global) prediction_matrix.resetFsm(indices->btb_index, fsm_initial_state);
-                if(!is_history_global) history_table.resetHistory(indices->btb_index);
+                if(!is_history_global) {
+                    history_table.resetHistory(indices->btb_index);
+                    Indices updated_indices1;
+                    _decode_indices(pc,updated_indices1);
+                    history_key = (share_mode != NOT_SHARED) ? updated_indices1.shared_index : history_table.getHistory(updated_indices1.btb_index);;
+                }
+
+                //uint8_t history_key = (share_mode != NOT_SHARED) ? indices->shared_index : history_table.getHistory(indices->btb_index);
 
                 _update_entrance_info(*indices, targetPc);
 
@@ -511,6 +542,10 @@ public:
                 history_table.updateHistory(indices->btb_index, taken);
 
                 delete indices;
+
+                //cout << endl << endl; // TODO: REMOVE. FOR DEBUG.
+
+
                 return;
             }
 
@@ -527,6 +562,8 @@ public:
         }
 
         delete indices;
+
+        //cout << endl << endl; // TODO: REMOVE. FOR DEBUG.
     }
 
     void getStat(SIM_stats &update_stat) const {
