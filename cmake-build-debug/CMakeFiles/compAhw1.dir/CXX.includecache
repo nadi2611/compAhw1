@@ -1,0 +1,40 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+C:/Users/nadin/Documents/GitHub/compAhw1/bp.cpp
+bp_api.h
+C:/Users/nadin/Documents/GitHub/compAhw1/bp_api.h
+exception
+-
+bitset
+-
+iostream
+-
+cmath
+-
+
+C:/Users/nadin/Documents/GitHub/compAhw1/bp_api.h
+stdbool.h
+-
+stdint.h
+-
+
+C:/Users/nadin/Documents/GitHub/compAhw1/main.cpp
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
+stdbool.h
+-
+iostream
+-
+bp_api.h
+C:/Users/nadin/Documents/GitHub/compAhw1/bp_api.h
+
